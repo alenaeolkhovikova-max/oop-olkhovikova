@@ -1,4 +1,4 @@
-# C# / .NET
+ # C# / .NET
 bin/
 obj/
 .vs/
@@ -29,4 +29,4 @@ Temp/
 Logs/
 .godot/
 
-docs/lab1-todo/build/  #Добавила игнор для build в lab1.
+docs/lab1-todo/build/  
