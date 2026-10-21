@@ -28,3 +28,5 @@ Library/
 Temp/
 Logs/
 .godot/
+
+docs/lab1-todo/build/  #Добавила игнор для build в lab1.
