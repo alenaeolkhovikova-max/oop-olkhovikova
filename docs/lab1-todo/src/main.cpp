@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "../include/todolist.h" 
+#include "oop-olkhovikova/docs/lab1-todo/include/todolist.h" 
 using namespace std;
 
 int main() {
