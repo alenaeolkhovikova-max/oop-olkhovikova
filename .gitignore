@@ -29,4 +29,7 @@ Temp/
 Logs/
 .godot/
 
-docs/lab1-todo/build/  
+# .NET build files
+**/bin/
+**/obj/
+*.csproj.user  
