@@ -1,4 +1,4 @@
-# C# / .NET
+ # C# / .NET
 bin/
 obj/
 .vs/
@@ -28,3 +28,8 @@ Library/
 Temp/
 Logs/
 .godot/
+
+# .NET build files
+**/bin/
+**/obj/
+*.csproj.user  
