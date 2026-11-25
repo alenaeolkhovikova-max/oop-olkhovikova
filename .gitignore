@@ -1,8 +1,10 @@
-# C# / .NET
+﻿# C# / .NET
 bin/
 obj/
-.vs/
 *.user
+
+# Chat history
+history.jsonl
 
 # Java / Kotlin
 target/
@@ -16,14 +18,14 @@ cmake-build-*/
 *.o
 *.exe
 
-# IDE и система
+# IDE и системные файлы
 .idea/
 .vscode/
 *.iml
 .DS_Store
 Thumbs.db
 
-# Unity и Godot (РПГ)
+# Unity и Godot
 Library/
 Temp/
 Logs/
