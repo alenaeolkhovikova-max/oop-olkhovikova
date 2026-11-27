@@ -10,7 +10,7 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // Сначала показываем окно входа; чат откроется после успешного подключения.
+        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             desktop.MainWindow = new LoginWindow();
 

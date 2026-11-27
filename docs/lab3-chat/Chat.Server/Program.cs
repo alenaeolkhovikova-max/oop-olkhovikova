@@ -20,11 +20,9 @@ internal static class Program
             }
         }
 
-        // История лежит в файле рядом с тем местом, откуда запущен сервер.
         string historyPath = Path.GetFullPath("history.jsonl");
         var server = new ChatServer(port, new MessageHistory(historyPath));
 
-        // Ctrl+C: аккуратно останавливаем сервер, а не обрываем процесс.
         Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
@@ -50,7 +48,6 @@ internal static class Program
         return 0;
     }
 
-    /// <summary>Печатает адреса, по которым к серверу можно подключиться с другого компьютера.</summary>
     private static void PrintAddresses(int port)
     {
         Console.WriteLine($"Порт: {port}");
@@ -70,7 +67,7 @@ internal static class Program
         }
         catch (NetworkInformationException)
         {
-            // Адреса — просто подсказка, без них сервер работает.
+
         }
     }
 }

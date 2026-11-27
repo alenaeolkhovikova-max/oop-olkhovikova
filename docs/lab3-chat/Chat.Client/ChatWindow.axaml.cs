@@ -10,15 +10,9 @@ using Avalonia.Threading;
 using Chat.Common;
 
 namespace Chat.Client;
-
-/// <summary>
-/// Окно чата. Про сеть не знает ничего: только подписывается на события <see cref="ChatClient"/>
-/// и рисует то, что пришло. События приходят из фонового потока, а менять элементы окна можно
-/// только в потоке интерфейса, поэтому каждый обработчик сразу делает Dispatcher.UIThread.Post(...).
-/// </summary>
 public partial class ChatWindow : Window
 {
-    private const int MaxRows = 500; // старые строки убираем, чтобы лента не росла бесконечно
+    private const int MaxRows = 500; 
 
     private static readonly string[] NickColors =
     {
@@ -29,9 +23,9 @@ public partial class ChatWindow : Window
     private readonly string _myNick;
     private readonly string _server;
 
-    private string? _recipient;       // кому личное сообщение; null — всем
-    private bool _updatingUsers;      // true, пока список «онлайн» перестраивается кодом
-    private bool _inHistory;          // идёт ли сейчас блок истории
+    private string? _recipient;       
+    private bool _updatingUsers;      
+    private bool _inHistory;          
     private bool _connected = true;
     private bool _leaving;
 
@@ -47,10 +41,9 @@ public partial class ChatWindow : Window
         TitleText.Text = $"Вы в чате как {_myNick}";
         StatusText.Text = $"Сервер {_server}";
 
-        // Enter в поле ввода отправляет сообщение (Tunnel — раньше, чем поле обработает клавишу сам).
+        
         InputBox.AddHandler(KeyDownEvent, InputBox_KeyDown, RoutingStrategies.Tunnel);
 
-        // Подписка на события клиента (Observer). Только после этого запускаем чтение.
         _client.MessageReceived += OnMessageReceived;
         _client.Disconnected += OnDisconnected;
 
@@ -65,7 +58,6 @@ public partial class ChatWindow : Window
         _client.StartReading();
     }
 
-    // ---------- события клиента (фоновый поток → поток интерфейса) ----------
 
     private void OnMessageReceived(ChatMessage message) =>
         Dispatcher.UIThread.Post(() => ShowMessage(message));
@@ -73,11 +65,9 @@ public partial class ChatWindow : Window
     private void OnDisconnected(string reason) =>
         Dispatcher.UIThread.Post(() => ShowDisconnected(reason));
 
-    // ---------- показ сообщений (поток интерфейса) ----------
 
     private void ShowMessage(ChatMessage m)
     {
-        // Блок истории: подписываем его, чтобы он не путался с новыми сообщениями.
         if (m.Type == MessageTypes.History && !_inHistory)
         {
             _inHistory = true;
@@ -121,7 +111,6 @@ public partial class ChatWindow : Window
         }
     }
 
-    /// <summary>Одна строка ленты: время, ник, текст.</summary>
     private void AddRow(DateTime time, string nick, string text, string textColor, string nickColor, string? background)
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*") };
@@ -166,7 +155,6 @@ public partial class ChatWindow : Window
         AppendToFeed(holder);
     }
 
-    /// <summary>Служебная строка по центру: «вошёл», «вышел», ошибка.</summary>
     private void AddNotice(string text, string color)
     {
         var block = new TextBlock
@@ -186,11 +174,9 @@ public partial class ChatWindow : Window
         FeedPanel.Children.Add(control);
         while (FeedPanel.Children.Count > MaxRows) FeedPanel.Children.RemoveAt(0);
 
-        // Прокрутка вниз — после того как лента пересчитает размеры.
         Dispatcher.UIThread.Post(() => FeedScroll.ScrollToEnd(), DispatcherPriority.Background);
     }
 
-    /// <summary>Цвет ника зависит от самого ника, поэтому у каждого собеседника свой.</summary>
     private static string ColorFor(string nick)
     {
         int sum = 0;
@@ -198,7 +184,6 @@ public partial class ChatWindow : Window
         return NickColors[sum % NickColors.Length];
     }
 
-    // ---------- список «онлайн» ----------
 
     private void UpdateUsers(List<string> names)
     {
@@ -243,7 +228,7 @@ public partial class ChatWindow : Window
 
     private void ClearRecipientButton_Click(object? sender, RoutedEventArgs e)
     {
-        UsersList.SelectedItem = null; // сработает SelectionChanged → получатель сбросится
+        UsersList.SelectedItem = null; 
         _recipient = null;
         UpdateRecipientBar(false);
         InputBox.Focus();
@@ -257,7 +242,6 @@ public partial class ChatWindow : Window
         RecipientText.Text = _recipient != null ? $"Личное сообщение для: {_recipient}" : "";
     }
 
-    // ---------- отправка ----------
 
     private void InputBox_KeyDown(object? sender, KeyEventArgs e)
     {
@@ -275,7 +259,6 @@ public partial class ChatWindow : Window
         string text = (InputBox.Text ?? "").Trim();
         if (text.Length == 0) return;
 
-        // В очередь на отправку; сама отправка идёт в фоновом потоке, окно не ждёт.
         if (_recipient != null) _client.SendPrivate(_recipient, text);
         else _client.SendText(text);
 
@@ -283,7 +266,6 @@ public partial class ChatWindow : Window
         InputBox.Focus();
     }
 
-    // ---------- обрыв связи и выход ----------
 
     private void ShowDisconnected(string reason)
     {
@@ -305,7 +287,6 @@ public partial class ChatWindow : Window
         if (_leaving) return;
         _leaving = true;
 
-        // Возвращаемся к окну входа; Closed сам отпишется от событий и закроет соединение.
         new LoginWindow().Show();
         Close();
     }

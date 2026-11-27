@@ -6,11 +6,6 @@ using Chat.Common;
 
 namespace Chat.Server;
 
-/// <summary>
-/// История чата (★★). Каждое сообщение дописывается в файл отдельной строкой JSON,
-/// поэтому после перезапуска сервера история не теряется. В памяти хранятся последние 20.
-/// Личные сообщения сюда не попадают: их видят только двое.
-/// </summary>
 public class MessageHistory
 {
     private readonly string _path;
@@ -23,7 +18,6 @@ public class MessageHistory
         Load();
     }
 
-    /// <summary>Читает файл при запуске сервера и запоминает последние сообщения.</summary>
     private void Load()
     {
         try
@@ -39,7 +33,7 @@ public class MessageHistory
                 }
                 catch (JsonException)
                 {
-                    // Битую строку пропускаем, остальная история остаётся.
+       
                 }
             }
         }
@@ -53,7 +47,6 @@ public class MessageHistory
         if (_last.Count > ChatDefaults.HistorySize) _last.RemoveAt(0);
     }
 
-    /// <summary>Запоминает сообщение и дописывает его в файл.</summary>
     public void Add(ChatMessage message)
     {
         lock (_sync)
@@ -68,7 +61,6 @@ public class MessageHistory
         }
     }
 
-    /// <summary>Копия последних сообщений (от старых к новым).</summary>
     public List<ChatMessage> Last()
     {
         lock (_sync)

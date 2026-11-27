@@ -8,8 +8,6 @@ using Avalonia.Interactivity;
 using Chat.Common;
 
 namespace Chat.Client;
-
-/// <summary>Окно входа: адрес, порт, ник. Подключение идёт асинхронно (await), окно не зависает.</summary>
 public partial class LoginWindow : Window
 {
     private bool _busy;
@@ -18,7 +16,6 @@ public partial class LoginWindow : Window
     {
         InitializeComponent();
 
-        // Enter в любом поле = нажать «Войти». Tunnel — перехватываем клавишу раньше самого поля.
         AddHandler(KeyDownEvent, Window_KeyDown, RoutingStrategies.Tunnel);
         Opened += (_, _) => NickBox.Focus();
     }
@@ -59,7 +56,6 @@ public partial class LoginWindow : Window
         {
             await client.ConnectAsync(host, port, nick);
 
-            // Вошли: открываем чат и закрываем окно входа.
             var chat = new ChatWindow(client, host, port);
             chat.Show();
             Close();
@@ -67,7 +63,7 @@ public partial class LoginWindow : Window
         }
         catch (LoginRejectedException ex)
         {
-            ShowError(ex.Message); // например, «Ник уже занят»
+            ShowError(ex.Message); 
         }
         catch (TimeoutException)
         {

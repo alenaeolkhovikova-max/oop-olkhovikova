@@ -10,18 +10,13 @@ using Chat.Common;
 
 namespace Chat.Client;
 
-/// <summary>Сервер не пустил в чат (например, ник занят). В Message — причина для пользователя.</summary>
+//Сервер не пустил в чат
 public class LoginRejectedException : Exception
 {
     public LoginRejectedException(string message) : base(message) { }
 }
 
-/// <summary>
-/// Сетевая часть клиента. Ничего не знает про окна и Avalonia: только соединение и события.
-/// Окно подписывается на <see cref="MessageReceived"/> (паттерн Наблюдатель / Observer):
-/// клиент сообщает «пришло сообщение», а что с ним делать — решает подписчик.
-/// Чтение и запись идут в своих фоновых потоках, поэтому окно не зависает.
-/// </summary>
+
 public class ChatClient
 {
     private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(5);
@@ -33,20 +28,12 @@ public class ChatClient
     private int _disconnectedRaised;
     private volatile bool _closedByUser;
 
-    /// <summary>Пришло сообщение от сервера. Вызывается из ФОНОВОГО потока.</summary>
     public event Action<ChatMessage>? MessageReceived;
 
-    /// <summary>Соединение потеряно (сервер выключен, пропала сеть). Аргумент — текст для пользователя.
-    /// Не вызывается, если пользователь сам вызвал <see cref="Close"/>. Вызывается из фонового потока.</summary>
     public event Action<string>? Disconnected;
 
     public string Nick { get; private set; } = "";
 
-    /// <summary>
-    /// Подключается и входит под ником. Исключения:
-    /// <see cref="LoginRejectedException"/> — ник не принят; <see cref="TimeoutException"/> — сервер не ответил;
-    /// <see cref="SocketException"/> / <see cref="IOException"/> — не удалось соединиться.
-    /// </summary>
     public async Task ConnectAsync(string host, int port, string nick)
     {
         var tcp = new TcpClient { NoDelay = true };
@@ -57,11 +44,11 @@ public class ChatClient
             NetworkStream stream = tcp.GetStream();
             var reader = new StreamReader(stream, new UTF8Encoding(false));
 
-            // Первое сообщение клиента — «join» с желаемым ником.
+            
             byte[] join = Encoding.UTF8.GetBytes(ChatMessage.Create(MessageTypes.Join, nick, "").ToJson() + "\n");
             await stream.WriteAsync(join, 0, join.Length).WaitAsync(ConnectTimeout).ConfigureAwait(false);
 
-            // Ждём ответ: «ok» или «error».
+            
             string? line = await reader.ReadLineAsync().WaitAsync(ConnectTimeout).ConfigureAwait(false);
             if (line == null) throw new IOException("Сервер закрыл соединение.");
 
@@ -82,22 +69,21 @@ public class ChatClient
         }
     }
 
-    /// <summary>Запустить фоновые потоки чтения и отправки. Вызывать после подписки на события.</summary>
     public void StartReading()
     {
         new Thread(ReadLoop) { IsBackground = true }.Start();
         new Thread(WriteLoop) { IsBackground = true }.Start();
     }
 
-    /// <summary>Сообщение всем.</summary>
+    //Сообщение всем.
     public void SendText(string text) =>
         Enqueue(new ChatMessage(MessageTypes.Text, Nick, text, DateTime.UtcNow, null, null));
 
-    /// <summary>Личное сообщение (★).</summary>
+    //Личное сообщение 
     public void SendPrivate(string toNick, string text) =>
         Enqueue(new ChatMessage(MessageTypes.Private, Nick, text, DateTime.UtcNow, toNick, null));
 
-    /// <summary>Положить сообщение в очередь; реальную отправку сделает фоновый поток (окно не ждёт сеть).</summary>
+    //сообщение в очереди; (окно не ждёт сеть).
     private void Enqueue(ChatMessage message)
     {
         try
@@ -110,7 +96,7 @@ public class ChatClient
         }
     }
 
-    /// <summary>Фоновый поток: читает строки от сервера и сообщает подписчикам.</summary>
+    //читает строки от сервера и сообщает юзерам.
     private void ReadLoop()
     {
         try
@@ -127,7 +113,7 @@ public class ChatClient
                 }
                 catch (JsonException)
                 {
-                    continue; // непонятную строку пропускаем, чат продолжает работать
+                    continue; 
                 }
                 MessageReceived?.Invoke(message);
             }
@@ -139,7 +125,6 @@ public class ChatClient
         OnConnectionLost();
     }
 
-    /// <summary>Фоновый поток: отправляет сообщения из очереди по одному, в том же порядке.</summary>
     private void WriteLoop()
     {
         try
@@ -155,7 +140,6 @@ public class ChatClient
         catch (ObjectDisposedException) { OnConnectionLost(); }
     }
 
-    /// <summary>Сообщает об обрыве один раз, даже если сработали оба потока.</summary>
     private void OnConnectionLost()
     {
         if (_closedByUser) return;
@@ -165,7 +149,7 @@ public class ChatClient
         Disconnected?.Invoke("Соединение с сервером потеряно.");
     }
 
-    /// <summary>Пользователь сам выходит из чата.</summary>
+    //Юзер сам выходит из чата.
     public void Close()
     {
         _closedByUser = true;

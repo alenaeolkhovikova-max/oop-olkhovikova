@@ -8,11 +8,6 @@ using Chat.Common;
 
 namespace Chat.Server;
 
-/// <summary>
-/// Обработчик одного клиента. Для каждого подключения сервер запускает отдельный поток
-/// с методом <see cref="Run"/>: он в цикле читает строки от клиента (чтение блокирует поток,
-/// пока ничего не пришло), поэтому один «молчащий» клиент не мешает остальным.
-/// </summary>
 public class ClientHandler
 {
     private const int LoginTimeoutMs = 10_000;
@@ -20,13 +15,11 @@ public class ClientHandler
     private readonly TcpClient _tcp;
     private readonly ChatServer _server;
     private readonly NetworkStream _stream;
-    private readonly object _writeLock = new(); // два потока не должны писать в сокет одновременно
+    private readonly object _writeLock = new(); 
     private int _closed;
 
-    /// <summary>Ник клиента; пустой, пока он не вошёл.</summary>
     public string? Nick { get; internal set; }
 
-    /// <summary>Адрес клиента для журнала сервера.</summary>
     public string Address { get; }
 
     public ClientHandler(TcpClient tcp, ChatServer server)
@@ -34,19 +27,17 @@ public class ClientHandler
         _tcp = tcp;
         _server = server;
         _tcp.NoDelay = true;
-        _tcp.SendTimeout = 5000; // если клиент завис и не читает, не ждём вечно
+        _tcp.SendTimeout = 5000; 
         _stream = tcp.GetStream();
         Address = tcp.Client.RemoteEndPoint?.ToString() ?? "?";
     }
 
-    /// <summary>Работа потока клиента: вход, затем чтение сообщений до отключения.</summary>
     public void Run()
     {
         try
         {
             using var reader = new StreamReader(_stream, new UTF8Encoding(false));
 
-            // Первое сообщение должно прийти быстро и быть «join». Иначе отключаем.
             _tcp.ReceiveTimeout = LoginTimeoutMs;
             string? first = reader.ReadLine();
             if (first == null || !Login(first)) return;
@@ -59,18 +50,17 @@ public class ClientHandler
                 Handle(line);
             }
         }
-        catch (IOException) { }                 // клиент закрыл окно или пропала сеть
+        catch (IOException) { }                 
         catch (SocketException) { }
         catch (ObjectDisposedException) { }
         finally
         {
-            // Что бы ни случилось, сервер продолжает работать: убираем клиента и закрываем сокет.
+
             _server.Leave(this);
             Close();
         }
     }
 
-    /// <summary>Проверка первого сообщения. true — клиент вошёл.</summary>
     private bool Login(string line)
     {
         ChatMessage join;
@@ -114,7 +104,6 @@ public class ClientHandler
         return false;
     }
 
-    /// <summary>Разбор сообщения уже вошедшего клиента.</summary>
     private void Handle(string line)
     {
         ChatMessage message;
@@ -146,11 +135,6 @@ public class ClientHandler
         }
     }
 
-    /// <summary>
-    /// Отправить сообщение клиенту (одна строка JSON + перевод строки).
-    /// Вызывается из потоков других клиентов, поэтому запись под своим lock.
-    /// При ошибке записи закрывает соединение, а поток клиента сам уберёт его из списка.
-    /// </summary>
     public bool Send(ChatMessage message)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(message.ToJson() + "\n");
@@ -169,7 +153,6 @@ public class ClientHandler
         return false;
     }
 
-    /// <summary>Закрыть соединение (можно вызывать много раз).</summary>
     public void Close()
     {
         if (Interlocked.Exchange(ref _closed, 1) == 1) return;
